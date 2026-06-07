@@ -73,6 +73,96 @@ class ISD_Cleanup {
     }
 
     /**
+     * Retorna IDs de anexos protegidos que NUNCA devem ser deletados (ex: favicon, logo do site, imagens de cabeçalho)
+     *
+     * @return array IDs dos anexos.
+     */
+    public function get_protected_attachment_ids() {
+        $protected = array();
+
+        // 1. Favicon do Site (Site Icon)
+        $site_icon = (int) get_option( 'site_icon' );
+        if ( $site_icon ) {
+            $protected[] = $site_icon;
+        }
+
+        // 2. Custom Logo do WordPress
+        $custom_logo = (int) get_theme_mod( 'custom_logo' );
+        if ( $custom_logo ) {
+            $protected[] = $custom_logo;
+        }
+
+        // 3. Imagem de cabeçalho (Header Image)
+        $header_image_id = (int) get_theme_mod( 'header_image_data' );
+        if ( $header_image_id ) {
+            $protected[] = $header_image_id;
+        }
+
+        // 4. Imagem de fundo (Background Image)
+        $background_image = get_theme_mod( 'background_image' );
+        if ( $background_image ) {
+            $bg_id = attachment_url_to_postid( $background_image );
+            if ( $bg_id ) {
+                $protected[] = $bg_id;
+            }
+        }
+
+        // 5. Varre todos os theme_mods em busca de chaves que possam conter IDs ou URLs de logos/ícones
+        $theme_mods = get_theme_mods();
+        if ( is_array( $theme_mods ) ) {
+            foreach ( $theme_mods as $key => $val ) {
+                $key_lower = strtolower( $key );
+                if ( strpos( $key_lower, 'logo' ) !== false || strpos( $key_lower, 'icon' ) !== false || strpos( $key_lower, 'favicon' ) !== false ) {
+                    if ( is_numeric( $val ) && $val > 0 ) {
+                        $protected[] = (int) $val;
+                    } elseif ( is_string( $val ) && filter_var( $val, FILTER_VALIDATE_URL ) ) {
+                        $att_id = attachment_url_to_postid( $val );
+                        if ( $att_id ) {
+                            $protected[] = $att_id;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 6. Varre a tabela wp_options para chaves contendo 'logo', 'icon', 'favicon' ou 'site_icon'
+        global $wpdb;
+        $options_query = "SELECT option_value FROM {$wpdb->options} 
+                          WHERE option_name LIKE '%logo%' 
+                          OR option_name LIKE '%icon%' 
+                          OR option_name LIKE '%favicon%'";
+        $options = $wpdb->get_col( $options_query );
+        if ( ! empty( $options ) ) {
+            foreach ( $options as $val ) {
+                if ( is_numeric( $val ) && $val > 0 ) {
+                    $protected[] = (int) $val;
+                } elseif ( is_string( $val ) && filter_var( $val, FILTER_VALIDATE_URL ) ) {
+                    $att_id = attachment_url_to_postid( $val );
+                    if ( $att_id ) {
+                        $protected[] = $att_id;
+                    }
+                } elseif ( is_string( $val ) && is_serialized( $val ) ) {
+                    $unserialized = @maybe_unserialize( $val );
+                    if ( is_array( $unserialized ) ) {
+                        array_walk_recursive( $unserialized, function( $item ) use ( &$protected ) {
+                            if ( is_numeric( $item ) && $item > 0 ) {
+                                $protected[] = (int) $item;
+                            } elseif ( is_string( $item ) && filter_var( $item, FILTER_VALIDATE_URL ) ) {
+                                $att_id = attachment_url_to_postid( $item );
+                                if ( $att_id ) {
+                                    $protected[] = $att_id;
+                                }
+                            }
+                        } );
+                    }
+                }
+            }
+        }
+
+        return array_unique( array_filter( $protected ) );
+    }
+
+    /**
      * Encontra IDs de anexos de imagens antigas
      *
      * @param int $limit Limite de resultados (0 para sem limite).
@@ -97,6 +187,12 @@ class ISD_Cleanup {
                 WHERE tt.taxonomy = 'category'
                 AND tt.term_id IN ($categories_placeholder)
             )";
+        }
+
+        // Evita apagar favicon, logo, etc.
+        $protected_ids = $this->get_protected_attachment_ids();
+        if ( ! empty( $protected_ids ) ) {
+            $exclude_clause .= " AND a.ID NOT IN (" . implode( ',', $protected_ids ) . ")";
         }
 
         $query = $wpdb->prepare(
@@ -129,6 +225,15 @@ class ISD_Cleanup {
         
         $limit_clause = $limit > 0 ? $wpdb->prepare( "LIMIT %d", $limit ) : '';
 
+        // Evita apagar favicon, logo, etc.
+        $protected_ids = $this->get_protected_attachment_ids();
+        $exclude_protected = '';
+        $exclude_protected_orphaned = '';
+        if ( ! empty( $protected_ids ) ) {
+            $exclude_protected = "AND a.ID NOT IN (" . implode( ',', $protected_ids ) . ")";
+            $exclude_protected_orphaned = "AND ID NOT IN (" . implode( ',', $protected_ids ) . ")";
+        }
+
         // 1. Imagens com post pai que foi deletado
         if ( ! empty( $settings['delete_broken_parent'] ) ) {
             $query = "SELECT a.ID FROM {$wpdb->posts} a
@@ -137,6 +242,7 @@ class ISD_Cleanup {
                       AND a.post_mime_type LIKE 'image/%%'
                       AND a.post_parent > 0
                       AND p.ID IS NULL
+                      $exclude_protected
                       ORDER BY a.ID ASC
                       $limit_clause";
             $res = $wpdb->get_col( $query );
@@ -160,6 +266,7 @@ class ISD_Cleanup {
                       WHERE a.post_type = 'attachment'
                       AND a.post_mime_type LIKE 'image/%%'
                       AND p.post_status = 'trash'
+                      $exclude_protected
                       ORDER BY a.ID ASC
                       $current_limit_clause";
             $res = $wpdb->get_col( $query );
@@ -182,6 +289,7 @@ class ISD_Cleanup {
                       WHERE post_type = 'attachment'
                       AND post_mime_type LIKE 'image/%%'
                       AND post_parent = 0
+                      $exclude_protected_orphaned
                       ORDER BY ID ASC
                       $current_limit_clause";
             $res = $wpdb->get_col( $query );

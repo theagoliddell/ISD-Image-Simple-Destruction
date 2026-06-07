@@ -3,6 +3,7 @@
 # Ignorar pastas de dependências (muito pesadas)
 _BACKUPs/
 BANCO_DB.txt
+.gitignore
 GUIAS.txt
 chave_aplicacao.local.php
 chave_aplicacao.exemplo.php

@@ -9,31 +9,18 @@ chave_aplicacao.local.php
 chave_aplicacao.exemplo.php
 config.local.php
 isd-image-simple-destruction.zip
-
-# Ignorar arquivos de configuração sensíveis (SENHAS E CHAVES)
 .env
 .copilotignore
 .htaccess
 *.pem
 credentials.json
-
-# Ignorar arquivos gerados pelo Sistema Operacional
 .DS_Store
 Thumbs.db
 desktop.ini
-
-# Ignorar pastas de build/saída de código
 dist/
 build/
 *.exe
 *.pyc
-
-# Ignorar logs de erro
 *.log
 npm-debug.log*
-
-# --- EXCEÇÕES ---
-# Se você quiser ignorar todos os .txt, mas salvar o 'importante.txt':
-#*.txt
-#!importante.txt
 /generated/prisma

@@ -37,8 +37,8 @@ class ISD_Admin {
      */
     public function add_settings_menu() {
         add_options_page(
-            'ISD - Image Simple Destruction',
-            'Image Destruction',
+            __( 'ISD - Image Simple Destruction', 'isd-image-simple-destruction' ),
+            __( 'Image Destruction', 'isd-image-simple-destruction' ),
             'manage_options',
             'isd-settings',
             array( $this, 'render_settings_page' )
@@ -82,12 +82,18 @@ class ISD_Admin {
                 'ajax_url' => admin_url( 'admin-ajax.php' ),
                 'nonce'    => wp_create_nonce( 'isd_cleanup_nonce' ),
                 'messages' => array(
-                    'scanning'   => 'Escaneando mídias no banco de dados...',
-                    'deleting'   => 'Excluindo imagens... {percent}% completado.',
-                    'completed'  => 'Limpeza concluída com sucesso!',
-                    'no_images'  => 'Nenhuma imagem encontrada para os critérios selecionados.',
-                    'error'      => 'Ocorreu um erro no processo de exclusão.',
-                    'confirm'    => 'Tem certeza de que deseja apagar permanentemente todas as imagens correspondentes? Essa ação não pode ser desfeita.',
+                    'scanning'      => __( 'Scanning media in the database...', 'isd-image-simple-destruction' ),
+                    'deleting'      => __( 'Deleting images... {percent}% completed.', 'isd-image-simple-destruction' ),
+                    'completed'     => __( 'Cleanup completed successfully!', 'isd-image-simple-destruction' ),
+                    'no_images'     => __( 'No images found for the selected criteria.', 'isd-image-simple-destruction' ),
+                    'error'         => __( 'An error occurred during the deletion process.', 'isd-image-simple-destruction' ),
+                    'confirm'       => __( 'Are you sure you want to permanently delete all matching images? This action cannot be undone.', 'isd-image-simple-destruction' ),
+                    'starting'      => __( 'Starting deletion of', 'isd-image-simple-destruction' ),
+                    'est_size'      => __( 'Est. size:', 'isd-image-simple-destruction' ),
+                    'images'        => __( 'images', 'isd-image-simple-destruction' ),
+                    'images_deleted'=> __( 'Images deleted:', 'isd-image-simple-destruction' ),
+                    'space_freed'   => __( 'Space freed so far:', 'isd-image-simple-destruction' ),
+                    'error_prefix'  => __( 'Error:', 'isd-image-simple-destruction' ),
                 ),
             )
         );
@@ -103,7 +109,7 @@ class ISD_Admin {
 
         // Verifica permissões e nonce
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( 'Sem permissão.' );
+            wp_die( esc_html__( 'Access denied.', 'isd-image-simple-destruction' ) );
         }
 
         check_admin_referer( 'isd_save_settings_action', 'isd_settings_nonce' );
@@ -111,14 +117,21 @@ class ISD_Admin {
         $old_settings = $this->cleanup->get_settings();
 
         // Sanitização dos dados
+        $threshold_val = isset( $_POST['threshold_value'] ) ? max( 1, (int) $_POST['threshold_value'] ) : 30;
+        $threshold_unit_raw = isset( $_POST['threshold_unit'] ) ? sanitize_text_field( wp_unslash( $_POST['threshold_unit'] ) ) : 'days';
+        $threshold_unit = in_array( $threshold_unit_raw, array( 'days', 'months' ), true ) ? $threshold_unit_raw : 'days';
+        
+        $cron_interval_raw = isset( $_POST['cron_interval'] ) ? sanitize_text_field( wp_unslash( $_POST['cron_interval'] ) ) : 'daily';
+        $cron_interval = in_array( $cron_interval_raw, array( 'daily', 'twicedaily', 'weekly' ), true ) ? $cron_interval_raw : 'daily';
+
         $new_settings = array(
             'enabled'                   => isset( $_POST['enabled'] ) ? 1 : 0,
-            'threshold_value'           => max( 1, (int) $_POST['threshold_value'] ),
-            'threshold_unit'            => in_array( $_POST['threshold_unit'], array( 'days', 'months' ), true ) ? $_POST['threshold_unit'] : 'days',
+            'threshold_value'           => $threshold_val,
+            'threshold_unit'            => $threshold_unit,
             'delete_orphaned'           => isset( $_POST['delete_orphaned'] ) ? 1 : 0,
             'delete_trash_attachments'  => isset( $_POST['delete_trash_attachments'] ) ? 1 : 0,
             'delete_broken_parent'      => isset( $_POST['delete_broken_parent'] ) ? 1 : 0,
-            'cron_interval'             => in_array( $_POST['cron_interval'], array( 'daily', 'twicedaily', 'weekly' ), true ) ? $_POST['cron_interval'] : 'daily',
+            'cron_interval'             => $cron_interval,
             'exclude_categories'        => isset( $_POST['exclude_categories'] ) && is_array( $_POST['exclude_categories'] ) ? array_map( 'intval', $_POST['exclude_categories'] ) : array(),
         );
 
@@ -143,7 +156,7 @@ class ISD_Admin {
         check_ajax_referer( 'isd_cleanup_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( array( 'message' => 'Acesso negado.' ) );
+            wp_send_json_error( array( 'message' => __( 'Access denied.', 'isd-image-simple-destruction' ) ) );
         }
 
         // Obtém contagem
@@ -181,7 +194,7 @@ class ISD_Admin {
         check_ajax_referer( 'isd_cleanup_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( array( 'message' => 'Acesso negado.' ) );
+            wp_send_json_error( array( 'message' => __( 'Access denied.', 'isd-image-simple-destruction' ) ) );
         }
 
         $ids = isset( $_POST['ids'] ) ? array_map( 'intval', $_POST['ids'] ) : array();
@@ -204,13 +217,16 @@ class ISD_Admin {
         $completed = empty( $remaining );
 
         if ( $completed ) {
+            $accumulated_count = isset( $_POST['accumulated_count'] ) ? (int) $_POST['accumulated_count'] : 0;
+            $accumulated_bytes = isset( $_POST['accumulated_bytes'] ) ? (int) $_POST['accumulated_bytes'] : 0;
+
             // Se concluído, registra no histórico
             $history = get_option( 'isd_cleanup_history', array() );
             $history[] = array(
                 'timestamp'   => time(),
                 'type'        => 'manual',
-                'count'       => (int) $_POST['accumulated_count'] + $stats['count'],
-                'bytes_saved' => (int) $_POST['accumulated_bytes'] + $stats['bytes_saved'],
+                'count'       => $accumulated_count + $stats['count'],
+                'bytes_saved' => $accumulated_bytes + $stats['bytes_saved'],
             );
 
             if ( count( $history ) > 20 ) {

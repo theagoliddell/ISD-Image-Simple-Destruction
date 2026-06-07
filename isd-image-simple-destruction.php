@@ -7,7 +7,7 @@
  * Author:      Theago Liddell
  * Author URI:  https://github.com/theagoliddell
  * License:     GPLv2 or later
- * Text Domain: isd-image-destruction
+ * Text Domain: isd-image-simple-destruction
  * Domain Path: /languages
  */
 
@@ -88,6 +88,9 @@ function isd_unschedule_cleanup_cron() {
  * Inicialização do Plugin
  */
 function isd_init() {
+    // Carrega o domínio de texto para traduções
+    load_plugin_textdomain( 'isd-image-simple-destruction', false, dirname( ISD_BASENAME ) . '/languages' );
+
     // Inicializa a limpeza (cron hook)
     $cleanup = new ISD_Cleanup();
     add_action( 'isd_scheduled_cleanup', array( $cleanup, 'run_cleanup' ) );

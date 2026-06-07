@@ -127,11 +127,17 @@ class ISD_Cleanup {
 
         // 6. Varre a tabela wp_options para chaves contendo 'logo', 'icon', 'favicon' ou 'site_icon'
         global $wpdb;
-        $options_query = "SELECT option_value FROM {$wpdb->options} 
-                          WHERE option_name LIKE '%logo%' 
-                          OR option_name LIKE '%icon%' 
-                          OR option_name LIKE '%favicon%'";
-        $options = $wpdb->get_col( $options_query );
+        $options = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT option_value FROM {$wpdb->options} 
+                 WHERE option_name LIKE %s 
+                 OR option_name LIKE %s 
+                 OR option_name LIKE %s",
+                '%logo%',
+                '%icon%',
+                '%favicon%'
+            )
+        );
         if ( ! empty( $options ) ) {
             foreach ( $options as $val ) {
                 if ( is_numeric( $val ) && $val > 0 ) {
@@ -169,47 +175,48 @@ class ISD_Cleanup {
      * @return array IDs dos anexos.
      */
     public function get_old_images_ids( $limit = 0 ) {
-        global $wpdb;
         $settings = $this->get_settings();
         $days_val = (int) $settings['threshold_value'];
-        $unit = ( $settings['threshold_unit'] === 'months' ) ? 'MONTH' : 'DAY';
 
-        $limit_clause = $limit > 0 ? $wpdb->prepare( "LIMIT %d", $limit ) : '';
+        $parent_ids = get_posts( array(
+            'post_type'      => 'post',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'date_query'     => array(
+                array(
+                    'column' => 'post_date',
+                    'before' => ( $settings['threshold_unit'] === 'months' )
+                        ? "-{$days_val} months"
+                        : "-{$days_val} days",
+                ),
+            ),
+            'category__not_in' => ! empty( $settings['exclude_categories'] )
+                ? array_map( 'intval', $settings['exclude_categories'] )
+                : array(),
+        ) );
 
-        // Cláusula de exclusão de categorias
-        $exclude_clause = '';
-        $exclude_categories = ! empty( $settings['exclude_categories'] ) ? array_map( 'intval', $settings['exclude_categories'] ) : array();
-        if ( ! empty( $exclude_categories ) ) {
-            $categories_placeholder = implode( ',', $exclude_categories );
-            $exclude_clause = "AND p.ID NOT IN (
-                SELECT object_id FROM {$wpdb->term_relationships} tr
-                INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-                WHERE tt.taxonomy = 'category'
-                AND tt.term_id IN ($categories_placeholder)
-            )";
+        if ( empty( $parent_ids ) ) {
+            return array();
         }
 
-        // Evita apagar favicon, logo, etc.
+        $attachment_ids = get_posts( array(
+            'post_type'      => 'attachment',
+            'post_status'    => 'inherit',
+            'post_mime_type' => 'image',
+            'posts_per_page' => $limit > 0 ? $limit : -1,
+            'fields'         => 'ids',
+            'post_parent__in' => $parent_ids,
+            'order'          => 'ASC',
+            'orderby'        => 'ID',
+        ) );
+
         $protected_ids = $this->get_protected_attachment_ids();
         if ( ! empty( $protected_ids ) ) {
-            $exclude_clause .= " AND a.ID NOT IN (" . implode( ',', $protected_ids ) . ")";
+            return array_values( array_diff( $attachment_ids, $protected_ids ) );
         }
 
-        $query = $wpdb->prepare(
-            "SELECT a.ID FROM {$wpdb->posts} a
-             INNER JOIN {$wpdb->posts} p ON a.post_parent = p.ID
-             WHERE a.post_type = 'attachment'
-             AND a.post_mime_type LIKE 'image/%%'
-             AND p.post_type = 'post'
-             AND p.post_status = 'publish'
-             $exclude_clause
-             AND p.post_date < DATE_SUB(NOW(), INTERVAL %d $unit)
-             ORDER BY a.ID ASC
-             $limit_clause",
-            $days_val
-        );
-
-        return $wpdb->get_col( $query );
+        return $attachment_ids;
     }
 
     /**
@@ -219,90 +226,103 @@ class ISD_Cleanup {
      * @return array IDs dos anexos.
      */
     public function get_broken_images_ids( $limit = 0 ) {
-        global $wpdb;
         $settings = $this->get_settings();
         $ids = array();
-        
-        $limit_clause = $limit > 0 ? $wpdb->prepare( "LIMIT %d", $limit ) : '';
-
-        // Evita apagar favicon, logo, etc.
         $protected_ids = $this->get_protected_attachment_ids();
-        $exclude_protected = '';
-        $exclude_protected_orphaned = '';
-        if ( ! empty( $protected_ids ) ) {
-            $exclude_protected = "AND a.ID NOT IN (" . implode( ',', $protected_ids ) . ")";
-            $exclude_protected_orphaned = "AND ID NOT IN (" . implode( ',', $protected_ids ) . ")";
-        }
 
         // 1. Imagens com post pai que foi deletado
         if ( ! empty( $settings['delete_broken_parent'] ) ) {
-            $query = "SELECT a.ID FROM {$wpdb->posts} a
-                      LEFT JOIN {$wpdb->posts} p ON a.post_parent = p.ID
-                      WHERE a.post_type = 'attachment'
-                      AND a.post_mime_type LIKE 'image/%%'
-                      AND a.post_parent > 0
-                      AND p.ID IS NULL
-                      $exclude_protected
-                      ORDER BY a.ID ASC
-                      $limit_clause";
-            $res = $wpdb->get_col( $query );
-            if ( ! empty( $res ) ) {
-                $ids = array_merge( $ids, $res );
+            $all_with_parent = get_posts( array(
+                'post_type'      => 'attachment',
+                'post_status'    => 'inherit',
+                'post_mime_type' => 'image',
+                'posts_per_page' => -1,
+                'fields'         => 'ids',
+            ) );
+
+            foreach ( $all_with_parent as $att_id ) {
+                $parent_id = (int) get_post_field( 'post_parent', $att_id );
+                if ( $parent_id > 0 && ! get_post( $parent_id ) ) {
+                    if ( empty( $protected_ids ) || ! in_array( $att_id, $protected_ids, true ) ) {
+                        $ids[] = $att_id;
+                        if ( $limit > 0 && count( $ids ) >= $limit ) {
+                            break;
+                        }
+                    }
+                }
             }
         }
 
-        // Se já atingiu o limite, retorna
         if ( $limit > 0 && count( $ids ) >= $limit ) {
             return array_slice( $ids, 0, $limit );
         }
 
         // 2. Imagens associadas a posts na lixeira
         if ( ! empty( $settings['delete_trash_attachments'] ) ) {
-            $current_limit = $limit > 0 ? ($limit - count( $ids )) : 0;
-            $current_limit_clause = $current_limit > 0 ? $wpdb->prepare( "LIMIT %d", $current_limit ) : '';
+            $current_limit = $limit > 0 ? ( $limit - count( $ids ) ) : 0;
 
-            $query = "SELECT a.ID FROM {$wpdb->posts} a
-                      INNER JOIN {$wpdb->posts} p ON a.post_parent = p.ID
-                      WHERE a.post_type = 'attachment'
-                      AND a.post_mime_type LIKE 'image/%%'
-                      AND p.post_status = 'trash'
-                      $exclude_protected
-                      ORDER BY a.ID ASC
-                      $current_limit_clause";
-            $res = $wpdb->get_col( $query );
-            if ( ! empty( $res ) ) {
-                $ids = array_merge( $ids, $res );
+            $trashed_parents = get_posts( array(
+                'post_status'    => 'trash',
+                'posts_per_page' => -1,
+                'fields'         => 'ids',
+                'post_type'      => 'any',
+            ) );
+
+            if ( ! empty( $trashed_parents ) ) {
+                $trash_ids = get_posts( array(
+                    'post_type'      => 'attachment',
+                    'post_status'    => 'inherit',
+                    'post_mime_type' => 'image',
+                    'posts_per_page' => $current_limit > 0 ? $current_limit : -1,
+                    'fields'         => 'ids',
+                    'post_parent__in' => $trashed_parents,
+                    'order'          => 'ASC',
+                    'orderby'        => 'ID',
+                ) );
+
+                if ( ! empty( $trash_ids ) ) {
+                    foreach ( $trash_ids as $tid ) {
+                        if ( empty( $protected_ids ) || ! in_array( $tid, $protected_ids, true ) ) {
+                            $ids[] = $tid;
+                        }
+                    }
+                }
             }
         }
 
-        // Se já atingiu o limite, retorna
         if ( $limit > 0 && count( $ids ) >= $limit ) {
             return array_slice( $ids, 0, $limit );
         }
 
         // 3. Imagens órfãs (sem post_parent)
         if ( ! empty( $settings['delete_orphaned'] ) ) {
-            $current_limit = $limit > 0 ? ($limit - count( $ids )) : 0;
-            $current_limit_clause = $current_limit > 0 ? $wpdb->prepare( "LIMIT %d", $current_limit ) : '';
+            $current_limit = $limit > 0 ? ( $limit - count( $ids ) ) : 0;
 
-            $query = "SELECT ID FROM {$wpdb->posts}
-                      WHERE post_type = 'attachment'
-                      AND post_mime_type LIKE 'image/%%'
-                      AND post_parent = 0
-                      $exclude_protected_orphaned
-                      ORDER BY ID ASC
-                      $current_limit_clause";
-            $res = $wpdb->get_col( $query );
-            if ( ! empty( $res ) ) {
-                $ids = array_merge( $ids, $res );
+            $orphaned_ids = get_posts( array(
+                'post_type'      => 'attachment',
+                'post_status'    => 'inherit',
+                'post_mime_type' => 'image',
+                'posts_per_page' => $current_limit > 0 ? $current_limit : -1,
+                'fields'         => 'ids',
+                'post_parent'    => 0,
+                'order'          => 'ASC',
+                'orderby'        => 'ID',
+            ) );
+
+            if ( ! empty( $orphaned_ids ) ) {
+                foreach ( $orphaned_ids as $oid ) {
+                    if ( empty( $protected_ids ) || ! in_array( $oid, $protected_ids, true ) ) {
+                        $ids[] = $oid;
+                    }
+                }
             }
         }
 
         if ( $limit > 0 ) {
-            return array_slice( array_unique( $ids ), 0, $limit );
+            return array_slice( array_values( array_unique( $ids ) ), 0, $limit );
         }
 
-        return array_unique( $ids );
+        return array_values( array_unique( $ids ) );
     }
 
     /**

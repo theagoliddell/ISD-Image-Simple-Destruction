@@ -1,0 +1,253 @@
+# Copyright (C) 2026 Theago Liddell
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: ISD - Image Simple Destruction 1.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/theagoliddell/ISD-Image-Simple-Destruction\n"
+"POT-Creation-Date: 2026-06-07\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language-Team: \n"
+"Last-Translator: \n"
+
+#: includes/class-isd-admin.php
+msgid "Access denied."
+msgstr ""
+
+#: includes/class-isd-admin.php
+msgid "Scanning media in the database..."
+msgstr ""
+
+#: includes/class-isd-admin.php
+msgid "Deleting images... {percent}% completed."
+msgstr ""
+
+#: includes/class-isd-admin.php
+msgid "Cleanup completed successfully!"
+msgstr ""
+
+#: includes/class-isd-admin.php
+msgid "No images found for the selected criteria."
+msgstr ""
+
+#: includes/class-isd-admin.php
+msgid "An error occurred during the deletion process."
+msgstr ""
+
+#: includes/class-isd-admin.php
+msgid "Are you sure you want to permanently delete all matching images? This action cannot be undone."
+msgstr ""
+
+#: includes/class-isd-admin.php
+msgid "Starting deletion of"
+msgstr ""
+
+#: includes/class-isd-admin.php
+msgid "Est. size:"
+msgstr ""
+
+#: includes/class-isd-admin.php
+msgid "images"
+msgstr ""
+
+#: includes/class-isd-admin.php
+msgid "Images deleted:"
+msgstr ""
+
+#: includes/class-isd-admin.php
+msgid "Space freed so far:"
+msgstr ""
+
+#: includes/class-isd-admin.php
+msgid "Error:"
+msgstr ""
+
+#: includes/class-isd-admin.php
+msgid "ISD - Image Simple Destruction"
+msgstr ""
+
+#: includes/class-isd-admin.php
+msgid "Image Destruction"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Remove media files from old or broken posts to keep your server light and optimized."
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Settings saved and applied successfully!"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Automatic Cleanup Settings"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Enable Automatic Cleanup"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Activates daily/periodic automatic cleanup via WP Cron."
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Cleanup Frequency"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Daily"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Twice a day"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Weekly"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Select how often the server will perform the automatic scan."
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Delete images from posts published more than:"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Day(s)"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Month(s)"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Images from posts published before this limit will be physically removed. The post text remains unchanged."
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Exclude Categories from Cleanup:"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "No categories found."
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Images from posts belonging to the selected categories will NOT be deleted."
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Broken / Orphaned Image Rules"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Remove if the original post was deleted"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Deletes images whose source post no longer exists in the database."
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Remove from trashed posts"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Deletes images from posts that are currently in the Trash."
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Remove unattached (orphaned) images"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Deletes media files that are not linked to any post."
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Save Settings"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Manual Cleanup"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Run an instant scan using the rules configured above. The process runs safely in small background batches to avoid server overload."
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Clean Now"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Starting scan..."
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Server Status"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Automatic Scheduling"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Active"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Inactive"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Cron Frequency"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Next Scheduled Run"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "No active schedule"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Expiration Filter"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Recent Cleanup History"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "No cleanups recorded yet."
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Date/Time"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Type"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Deleted"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Space Saved"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Auto"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Manual"
+msgstr ""

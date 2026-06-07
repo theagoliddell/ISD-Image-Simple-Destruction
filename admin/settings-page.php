@@ -454,13 +454,16 @@ if ( ! defined( 'ABSPATH' ) ) {
     <!-- Cabeçalho -->
     <div class="isd-header">
         <h1>ISD - Image Simple Destruction</h1>
-        <p>Apague mídias de postagens antigas ou quebradas para manter seu servidor leve e otimizado.</p>
+        <p><?php esc_html_e( 'Remove media files from old or broken posts to keep your server light and optimized.', 'isd-image-simple-destruction' ); ?></p>
     </div>
 
     <!-- Feedback de atualização -->
-    <?php if ( isset( $_GET['settings-updated'] ) && 'true' === $_GET['settings-updated'] ) : ?>
+    <?php
+    // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+    if ( isset( $_GET['settings-updated'] ) && 'true' === $_GET['settings-updated'] ) :
+    ?>
         <div class="isd-alert isd-alert-success">
-            Configurações salvas e aplicadas com sucesso!
+            <?php esc_html_e( 'Settings saved and applied successfully!', 'isd-image-simple-destruction' ); ?>
         </div>
     <?php endif; ?>
 
@@ -473,13 +476,13 @@ if ( ! defined( 'ABSPATH' ) ) {
                 <?php wp_nonce_field( 'isd_save_settings_action', 'isd_settings_nonce' ); ?>
                 
                 <div class="isd-card">
-                    <h2>Configurações da Limpeza Automática</h2>
+                    <h2><?php esc_html_e( 'Automatic Cleanup Settings', 'isd-image-simple-destruction' ); ?></h2>
                     
                     <!-- Toggle Geral Habilitado -->
                     <div class="isd-switch-container">
                         <div class="isd-switch-info">
-                            <div class="isd-switch-title">Habilitar Limpeza Automática</div>
-                            <div class="isd-switch-desc">Ativa a limpeza automática diária/periódica via WP Cron.</div>
+                            <div class="isd-switch-title"><?php esc_html_e( 'Enable Automatic Cleanup', 'isd-image-simple-destruction' ); ?></div>
+                            <div class="isd-switch-desc"><?php esc_html_e( 'Activates daily/periodic automatic cleanup via WP Cron.', 'isd-image-simple-destruction' ); ?></div>
                         </div>
                         <label class="isd-switch">
                             <input type="checkbox" name="enabled" value="1" <?php checked( 1, $settings['enabled'] ); ?>>
@@ -489,62 +492,61 @@ if ( ! defined( 'ABSPATH' ) ) {
                     
                     <!-- Intervalo Cron -->
                     <div class="isd-form-group">
-                        <label class="isd-label" for="cron_interval">Frequência da Limpeza</label>
+                        <label class="isd-label" for="cron_interval"><?php esc_html_e( 'Cleanup Frequency', 'isd-image-simple-destruction' ); ?></label>
                         <select name="cron_interval" id="cron_interval" class="isd-input">
-                            <option value="daily" <?php selected( 'daily', $settings['cron_interval'] ); ?>>Diariamente</option>
-                            <option value="twicedaily" <?php selected( 'twicedaily', $settings['cron_interval'] ); ?>>Duas vezes ao dia</option>
-                            <option value="weekly" <?php selected( 'weekly', $settings['cron_interval'] ); ?>>Semanalmente</option>
+                            <option value="daily" <?php selected( 'daily', $settings['cron_interval'] ); ?>><?php esc_html_e( 'Daily', 'isd-image-simple-destruction' ); ?></option>
+                            <option value="twicedaily" <?php selected( 'twicedaily', $settings['cron_interval'] ); ?>><?php esc_html_e( 'Twice a day', 'isd-image-simple-destruction' ); ?></option>
+                            <option value="weekly" <?php selected( 'weekly', $settings['cron_interval'] ); ?>><?php esc_html_e( 'Weekly', 'isd-image-simple-destruction' ); ?></option>
                         </select>
-                        <p class="isd-description">Selecione a frequência com que o servidor fará a varredura automática.</p>
+                        <p class="isd-description"><?php esc_html_e( 'Select how often the server will perform the automatic scan.', 'isd-image-simple-destruction' ); ?></p>
                     </div>
 
                     <!-- Tempo limite para Posts Antigos -->
                     <div class="isd-form-group">
-                        <label class="isd-label">Excluir imagens de postagens publicadas há mais de:</label>
+                        <label class="isd-label"><?php esc_html_e( 'Delete images from posts published more than:', 'isd-image-simple-destruction' ); ?></label>
                         <div class="isd-input-group">
                             <input type="number" min="1" name="threshold_value" value="<?php echo esc_attr( $settings['threshold_value'] ); ?>" class="isd-input">
                             <select name="threshold_unit" class="isd-input">
-                                <option value="days" <?php selected( 'days', $settings['threshold_unit'] ); ?>>Dia(s)</option>
-                                <option value="months" <?php selected( 'months', $settings['threshold_unit'] ); ?>>Mês(es)</option>
+                                <option value="days" <?php selected( 'days', $settings['threshold_unit'] ); ?>><?php esc_html_e( 'Day(s)', 'isd-image-simple-destruction' ); ?></option>
+                                <option value="months" <?php selected( 'months', $settings['threshold_unit'] ); ?>><?php esc_html_e( 'Month(s)', 'isd-image-simple-destruction' ); ?></option>
                             </select>
                         </div>
-                        <p class="isd-description">As imagens das postagens publicadas antes desse limite serão removidas fisicamente. O post em texto não é alterado.</p>
+                        <p class="isd-description"><?php esc_html_e( 'Images from posts published before this limit will be physically removed. The post text remains unchanged.', 'isd-image-simple-destruction' ); ?></p>
                     </div>
 
                     <!-- Categorias a Excluir -->
                     <div class="isd-form-group">
-                        <label class="isd-label">Excluir Categorias da Limpeza:</label>
+                        <label class="isd-label"><?php esc_html_e( 'Exclude Categories from Cleanup:', 'isd-image-simple-destruction' ); ?></label>
                         <div class="isd-category-selector">
                             <?php 
                             $categories = get_categories( array( 'hide_empty' => 0 ) );
                             $exclude_categories = isset( $settings['exclude_categories'] ) ? $settings['exclude_categories'] : array();
                             if ( ! empty( $categories ) && ! is_wp_error( $categories ) ) :
                                 foreach ( $categories as $cat ) :
-                                    $checked = in_array( $cat->term_id, $exclude_categories, true ) ? 'checked' : '';
                                     ?>
                                     <label class="isd-category-checkbox-label">
-                                        <input type="checkbox" name="exclude_categories[]" value="<?php echo esc_attr( $cat->term_id ); ?>" <?php echo $checked; ?>>
+                                        <input type="checkbox" name="exclude_categories[]" value="<?php echo esc_attr( $cat->term_id ); ?>" <?php checked( in_array( $cat->term_id, $exclude_categories, true ) ); ?>>
                                         <?php echo esc_html( $cat->name ); ?>
                                     </label>
                                     <?php
                                 endforeach;
                             else :
-                                echo '<p class="isd-description">Nenhuma categoria encontrada.</p>';
+                                echo '<p class="isd-description">' . esc_html__( 'No categories found.', 'isd-image-simple-destruction' ) . '</p>';
                             endif;
                             ?>
                         </div>
-                        <p class="isd-description">Imagens de posts pertencentes às categorias selecionadas NÃO serão excluídas.</p>
+                        <p class="isd-description"><?php esc_html_e( 'Images from posts belonging to the selected categories will NOT be deleted.', 'isd-image-simple-destruction' ); ?></p>
                     </div>
                 </div>
 
                 <div class="isd-card">
-                    <h2>Regras para Imagens Quebradas / Órfãs</h2>
+                    <h2><?php esc_html_e( 'Broken / Orphaned Image Rules', 'isd-image-simple-destruction' ); ?></h2>
 
                     <!-- Deletar imagens com pai deletado -->
                     <div class="isd-switch-container">
                         <div class="isd-switch-info">
-                            <div class="isd-switch-title">Remover se o post original foi excluído</div>
-                            <div class="isd-switch-desc">Exclui imagens cujo post de origem não existe mais no banco de dados.</div>
+                            <div class="isd-switch-title"><?php esc_html_e( 'Remove if the original post was deleted', 'isd-image-simple-destruction' ); ?></div>
+                            <div class="isd-switch-desc"><?php esc_html_e( 'Deletes images whose source post no longer exists in the database.', 'isd-image-simple-destruction' ); ?></div>
                         </div>
                         <label class="isd-switch">
                             <input type="checkbox" name="delete_broken_parent" value="1" <?php checked( 1, $settings['delete_broken_parent'] ); ?>>
@@ -555,8 +557,8 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <!-- Deletar imagens na Lixeira -->
                     <div class="isd-switch-container">
                         <div class="isd-switch-info">
-                            <div class="isd-switch-title">Remover de postagens na lixeira</div>
-                            <div class="isd-switch-desc">Exclui imagens de postagens que estão atualmente na Lixeira.</div>
+                            <div class="isd-switch-title"><?php esc_html_e( 'Remove from trashed posts', 'isd-image-simple-destruction' ); ?></div>
+                            <div class="isd-switch-desc"><?php esc_html_e( 'Deletes images from posts that are currently in the Trash.', 'isd-image-simple-destruction' ); ?></div>
                         </div>
                         <label class="isd-switch">
                             <input type="checkbox" name="delete_trash_attachments" value="1" <?php checked( 1, $settings['delete_trash_attachments'] ); ?>>
@@ -567,8 +569,8 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <!-- Deletar imagens órfãs -->
                     <div class="isd-switch-container">
                         <div class="isd-switch-info">
-                            <div class="isd-switch-title">Remover imagens não anexadas (órfãs)</div>
-                            <div class="isd-switch-desc">Exclui mídias na biblioteca que não estão vinculadas a nenhuma postagem.</div>
+                            <div class="isd-switch-title"><?php esc_html_e( 'Remove unattached (orphaned) images', 'isd-image-simple-destruction' ); ?></div>
+                            <div class="isd-switch-desc"><?php esc_html_e( 'Deletes media files that are not linked to any post.', 'isd-image-simple-destruction' ); ?></div>
                         </div>
                         <label class="isd-switch">
                             <input type="checkbox" name="delete_orphaned" value="1" <?php checked( 1, $settings['delete_orphaned'] ); ?>>
@@ -577,22 +579,22 @@ if ( ! defined( 'ABSPATH' ) ) {
                     </div>
 
                     <div style="margin-top: 25px;">
-                        <input type="submit" name="isd_settings_submit" class="isd-btn isd-btn-primary" value="Salvar Configurações">
+                        <input type="submit" name="isd_settings_submit" class="isd-btn isd-btn-primary" value="<?php esc_attr_e( 'Save Settings', 'isd-image-simple-destruction' ); ?>">
                     </div>
                 </div>
 
             </form>
 
             <div class="isd-card">
-                <h2>Limpeza Manual Imediata</h2>
-                <p>Execute uma varredura instantânea com as regras configuradas acima. O processo roda de forma segura em pequenos lotes em segundo plano para evitar sobrecarga no servidor.</p>
+                <h2><?php esc_html_e( 'Manual Cleanup', 'isd-image-simple-destruction' ); ?></h2>
+                <p><?php esc_html_e( 'Run an instant scan using the rules configured above. The process runs safely in small background batches to avoid server overload.', 'isd-image-simple-destruction' ); ?></p>
                 
-                <button id="isd-start-cleanup" class="isd-btn isd-btn-danger">Limpar Agora</button>
+                <button id="isd-start-cleanup" class="isd-btn isd-btn-danger"><?php esc_html_e( 'Clean Now', 'isd-image-simple-destruction' ); ?></button>
 
                 <!-- Wrapper de Progresso -->
                 <div id="isd-progress-wrapper">
                     <div class="isd-progress-header">
-                        <span id="isd-progress-text">Iniciando varredura...</span>
+                        <span id="isd-progress-text"><?php esc_html_e( 'Starting scan...', 'isd-image-simple-destruction' ); ?></span>
                         <div id="isd-progress-status-icon" class="isd-progress-status-container">
                             <span class="isd-spinner"></span>
                             <span class="isd-status-icon"></span>
@@ -611,74 +613,74 @@ if ( ! defined( 'ABSPATH' ) ) {
         <div class="isd-column">
             
             <div class="isd-card">
-                <h2>Status do Servidor</h2>
+                <h2><?php esc_html_e( 'Server Status', 'isd-image-simple-destruction' ); ?></h2>
                 <ul class="isd-status-list">
                     <li>
-                        <span class="isd-status-label">Agendamento Automático</span>
+                        <span class="isd-status-label"><?php esc_html_e( 'Automatic Scheduling', 'isd-image-simple-destruction' ); ?></span>
                         <span class="isd-status-value">
                             <?php if ( $settings['enabled'] ) : ?>
-                                <span style="color: #10b981;">● Ativo</span>
+                                <span style="color: #10b981;">● <?php esc_html_e( 'Active', 'isd-image-simple-destruction' ); ?></span>
                             <?php else : ?>
-                                <span style="color: #ef4444;">● Inativo</span>
+                                <span style="color: #ef4444;">● <?php esc_html_e( 'Inactive', 'isd-image-simple-destruction' ); ?></span>
                             <?php endif; ?>
                         </span>
                     </li>
                     <li>
-                        <span class="isd-status-label">Frequência do Cron</span>
+                        <span class="isd-status-label"><?php esc_html_e( 'Cron Frequency', 'isd-image-simple-destruction' ); ?></span>
                         <span class="isd-status-value">
                             <?php
                             switch ( $settings['cron_interval'] ) {
                                 case 'daily':
-                                    echo 'Diário';
+                                    esc_html_e( 'Daily', 'isd-image-simple-destruction' );
                                     break;
                                 case 'twicedaily':
-                                    echo 'Duas vezes ao dia';
+                                    esc_html_e( 'Twice a day', 'isd-image-simple-destruction' );
                                     break;
                                 case 'weekly':
-                                    echo 'Semanal';
+                                    esc_html_e( 'Weekly', 'isd-image-simple-destruction' );
                                     break;
                             }
                             ?>
                         </span>
                     </li>
                     <li>
-                        <span class="isd-status-label">Próxima Execução Agendada</span>
+                        <span class="isd-status-label"><?php esc_html_e( 'Next Scheduled Run', 'isd-image-simple-destruction' ); ?></span>
                         <span class="isd-status-value">
                             <?php
                             $next_cron = wp_next_scheduled( 'isd_scheduled_cleanup' );
                             if ( $next_cron ) {
                                 echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $next_cron ) );
                             } else {
-                                echo 'Sem agendamento ativo';
+                                esc_html_e( 'No active schedule', 'isd-image-simple-destruction' );
                             }
                             ?>
                         </span>
                     </li>
                     <li>
-                        <span class="isd-status-label">Filtro de Expiração</span>
+                        <span class="isd-status-label"><?php esc_html_e( 'Expiration Filter', 'isd-image-simple-destruction' ); ?></span>
                         <span class="isd-status-value">
                             > <?php echo esc_html( $settings['threshold_value'] ); ?> 
-                            <?php echo $settings['threshold_unit'] === 'months' ? 'Mês(es)' : 'Dia(s)'; ?>
+                            <?php echo $settings['threshold_unit'] === 'months' ? esc_html__( 'Month(s)', 'isd-image-simple-destruction' ) : esc_html__( 'Day(s)', 'isd-image-simple-destruction' ); ?>
                         </span>
                     </li>
                 </ul>
             </div>
 
             <div class="isd-card">
-                <h2>Histórico de Limpezas Recentes</h2>
+                <h2><?php esc_html_e( 'Recent Cleanup History', 'isd-image-simple-destruction' ); ?></h2>
                 
                 <?php if ( empty( $history ) ) : ?>
                     <div class="isd-empty">
-                        Nenhuma limpeza registrada ainda.
+                        <?php esc_html_e( 'No cleanups recorded yet.', 'isd-image-simple-destruction' ); ?>
                     </div>
                 <?php else : ?>
                     <table class="isd-table">
                         <thead>
                             <tr>
-                                <th>Data/Hora</th>
-                                <th>Tipo</th>
-                                <th>Qtd. Apagada</th>
-                                <th>Espaço Salvo</th>
+                                <th><?php esc_html_e( 'Date/Time', 'isd-image-simple-destruction' ); ?></th>
+                                <th><?php esc_html_e( 'Type', 'isd-image-simple-destruction' ); ?></th>
+                                <th><?php esc_html_e( 'Deleted', 'isd-image-simple-destruction' ); ?></th>
+                                <th><?php esc_html_e( 'Space Saved', 'isd-image-simple-destruction' ); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -691,12 +693,12 @@ if ( ! defined( 'ABSPATH' ) ) {
                                     <td><?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $log['timestamp'] ) ); ?></td>
                                     <td>
                                         <?php if ( 'auto' === $log['type'] ) : ?>
-                                            <span class="isd-badge isd-badge-auto">Auto</span>
+                                            <span class="isd-badge isd-badge-auto"><?php esc_html_e( 'Auto', 'isd-image-simple-destruction' ); ?></span>
                                         <?php else : ?>
-                                            <span class="isd-badge isd-badge-manual">Manual</span>
+                                            <span class="isd-badge isd-badge-manual"><?php esc_html_e( 'Manual', 'isd-image-simple-destruction' ); ?></span>
                                         <?php endif; ?>
                                     </td>
-                                    <td><?php echo (int) $log['count']; ?> imagens</td>
+                                    <td><?php echo (int) $log['count']; ?> <?php esc_html_e( 'images', 'isd-image-simple-destruction' ); ?></td>
                                     <td><strong><?php echo esc_html( size_format( $log['bytes_saved'], 2 ) ); ?></strong></td>
                                 </tr>
                             <?php endforeach; ?>

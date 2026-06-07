@@ -44,7 +44,7 @@ jQuery(document).ready(function($) {
                         return;
                     }
 
-                    $('#isd-progress-text').text('Iniciando exclusão de ' + totalCount + ' imagens (Tamanho est.: ' + response.data.estimated_size + ')...');
+                    $('#isd-progress-text').text(isd_params.messages.starting + ' ' + totalCount + ' ' + isd_params.messages.images + ' (' + isd_params.messages.est_size + ' ' + response.data.estimated_size + ')...');
                     
                     // Inicia a deleção recursiva por lotes
                     runCleanupStep(response.data.ids);
@@ -92,8 +92,8 @@ jQuery(document).ready(function($) {
                     // Atualiza detalhes em tempo real
                     var sizeFormatted = formatBytes(accumulatedBytes);
                     $('#isd-progress-details').html(
-                        '<strong>Imagens apagadas:</strong> ' + accumulatedCount + ' / ' + totalCount + '<br>' +
-                        '<strong>Espaço liberado até agora:</strong> ' + sizeFormatted
+                        '<strong>' + isd_params.messages.images_deleted + '</strong> ' + accumulatedCount + ' / ' + totalCount + '<br>' +
+                        '<strong>' + isd_params.messages.space_freed + '</strong> ' + sizeFormatted
                     );
 
                     if (response.data.completed || remaining.length === 0) {
@@ -124,7 +124,7 @@ jQuery(document).ready(function($) {
     }
 
     function showError(msg) {
-        $('#isd-progress-text').text('Erro: ' + msg);
+        $('#isd-progress-text').text(isd_params.messages.error_prefix + ' ' + msg);
         $('#isd-progress-status-icon').removeClass('running').addClass('error');
         $('#isd-start-cleanup').prop('disabled', false);
         isRunning = false;

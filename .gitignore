@@ -1,6 +1,6 @@
 
 
-# Ignorar pastas de dependências (muito pesadas)
+# Ignorar
 _BACKUPs/
 BANCO_DB.txt
 .gitignore

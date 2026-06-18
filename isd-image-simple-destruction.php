@@ -3,7 +3,7 @@
  * Plugin Name: ISD - Image Simple Destruction
  * Plugin URI:  https://github.com/theagoliddell/ISD-Image-Simple-Destruction
  * Description: It automatically or manually removes media files (images) from the server that belong to old or broken posts, making the server lighter.
- * Version:     1.0.1
+ * Version:     1.0.2
  * Author:      Theago Liddell
  * Author URI:  https://github.com/theagoliddell
  * License:     GPLv2 or later
